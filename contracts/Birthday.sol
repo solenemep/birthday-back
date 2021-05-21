@@ -1,65 +1,55 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
+// Pour remix il faut importer une url depuis un repository github
+// Depuis un project Hardhat ou Truffle on utiliserait: import "@openzeppelin/ccontracts/utils/Address.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 
 contract Birthday {
+    // library usage
     using Address for address payable;
 
+    // State variables
     address private _owner;
     uint256 private _birthday;
 
-    event Offered(address indexed sender, uint256 value);
+    // Events
+    event Offered(address indexed sender, uint256 amount);
 
-    constructor(address owner_, uint256 delay_) {
+    // constructor
+    constructor(address owner_, uint256 birthday_) {
         _owner = owner_;
-        _birthday = block.timestamp + delay_ * 1 days;
+        _birthday = birthday_;
     }
 
-    modifier onlyOwner {
-        require(
-            msg.sender == _owner,
-            "Birthday: Sorry, this is not your birthday!"
-        );
-        _;
-    }
+    // modifiers
+   modifier onTime() {
+       require(block.timestamp >= _birthday, "Birthday : not your birthday yet !");
+       _;
+   }
+   
+   modifier onlyOwner() {
+       require(msg.sender == _owner, "Birthday : this gift is not for you.");
+       _;
+   }
 
-    modifier onTime {
-        require(_birthday <= block.timestamp, "Birthday: Not your B-Day yet!");
-        _;
-    }
-
-    modifier notOwner {
-        require(
-            msg.sender != _owner,
-            "Birthday: You are not allowed to use this functionality!"
-        );
-        _;
-    }
-
-    function offer() external payable {
-        emit Offered(msg.sender, msg.value);
-    }
-
+    // Function declarations below
     receive() external payable {
         emit Offered(msg.sender, msg.value);
     }
-
-    function viewPresent() public view notOwner returns (uint256) {
-        return address(this).balance;
+    
+    function offer() external payable {
+        emit Offered(msg.sender, msg.value);
     }
-
-    function getPresent() public onlyOwner onTime {
+    
+    function getGift() public onTime onlyOwner {
         payable(msg.sender).sendValue(address(this).balance);
     }
-
-    function getBDay() public view returns (uint256) {
-        return _birthday;
+    
+    function remainingTime() public view returns (uint256) {
+        require(_birthday >= block.timestamp, "Birthday : birthday has passed.");
+        return _birthday - bloc.timestamp; 
     }
 
-    function getRemainingTime() public view returns (uint256) {
-        require(_birthday >= block.timestamp, "Birthday: Birthday has past.");
-        return _birthday - block.timestamp;
-    }
-}
+    // Add getters
